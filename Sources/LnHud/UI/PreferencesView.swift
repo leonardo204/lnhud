@@ -57,6 +57,58 @@ struct PreferencesView: View {
                 }
             }
 
+            // MARK: - Color Section
+            Section("Color") {
+                Picker("Mode", selection: $settings.hudColorMode) {
+                    Text("System").tag(HUDColorMode.system)
+                    Text("Preset").tag(HUDColorMode.preset)
+                    Text("Custom").tag(HUDColorMode.custom)
+                }
+                .pickerStyle(.segmented)
+
+                if settings.hudColorMode == .preset {
+                    LazyVGrid(columns: Array(repeating: GridItem(.fixed(40), spacing: 8), count: 8), spacing: 8) {
+                        ForEach(HUDPresetColor.allCases, id: \.self) { preset in
+                            Button {
+                                DispatchQueue.main.async {
+                                    settings.hudPresetColor = preset
+                                }
+                            } label: {
+                                RoundedRectangle(cornerRadius: 6)
+                                    .fill(preset.swiftUIColor)
+                                    .frame(width: 32, height: 32)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 6)
+                                            .strokeBorder(
+                                                settings.hudPresetColor == preset ? Color.accentColor : Color.clear,
+                                                lineWidth: 2
+                                            )
+                                    )
+                            }
+                            .buttonStyle(.plain)
+                            .help(preset.label)
+                        }
+                    }
+                    .padding(.vertical, 4)
+                }
+
+                if settings.hudColorMode == .custom {
+                    ColorPicker("HUD Color", selection: Binding(
+                        get: {
+                            if let nsColor = NSColor.fromHex(settings.hudCustomColorHex) {
+                                return Color(nsColor: nsColor)
+                            }
+                            return Color(nsColor: NSColor(red: 0.1, green: 0.1, blue: 0.1, alpha: 1))
+                        },
+                        set: { newColor in
+                            DispatchQueue.main.async {
+                                settings.hudCustomColorHex = NSColor(newColor).hexString
+                            }
+                        }
+                    ), supportsOpacity: false)
+                }
+            }
+
             // MARK: - Display Section
             Section("Display") {
                 Toggle(isOn: Binding(

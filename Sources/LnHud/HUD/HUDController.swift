@@ -171,7 +171,8 @@ final class HUDController {
             text,
             fontSize: settings.hudFontSize,
             cornerRadius: settings.hudCornerRadius,
-            opacity: settings.hudOpacity
+            opacity: settings.hudOpacity,
+            backgroundColor: settings.resolvedHUDColor
         )
 
         guard let screen = targetScreen() else { return }

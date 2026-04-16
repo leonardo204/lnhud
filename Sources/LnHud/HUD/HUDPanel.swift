@@ -3,6 +3,7 @@ import AppKit
 final class HUDPanel: NSPanel {
 
     private let backgroundView = NSVisualEffectView()
+    private let colorOverlayView = NSView()
     private let label = NSTextField(labelWithString: "")
 
     private var cornerRadius: CGFloat = 24
@@ -58,23 +59,42 @@ final class HUDPanel: NSPanel {
         label.lineBreakMode = .byTruncatingTail
         label.setAccessibilityHidden(true)
 
+        colorOverlayView.wantsLayer = true
+        colorOverlayView.layer?.masksToBounds = true
+        colorOverlayView.alphaValue = 0 // hidden by default (system mode)
+
         // Frame-based layout only — no Auto Layout
         backgroundView.autoresizingMask = [.width, .height]
+        colorOverlayView.autoresizingMask = [.width, .height]
         label.translatesAutoresizingMaskIntoConstraints = true
 
         let contentBox = NSView(frame: .zero)
         contentBox.wantsLayer = true
         contentBox.addSubview(backgroundView)
+        contentBox.addSubview(colorOverlayView)
         contentBox.addSubview(label)
         contentView = contentBox
     }
 
     // MARK: - Public API
 
-    func updateText(_ text: String, fontSize: CGFloat, cornerRadius newRadius: CGFloat, opacity: Double = 0.9) {
+    func updateText(_ text: String, fontSize: CGFloat, cornerRadius newRadius: CGFloat, opacity: Double = 0.9, backgroundColor: NSColor? = nil) {
         cornerRadius = newRadius
         backgroundView.layer?.cornerRadius = cornerRadius
-        backgroundView.alphaValue = CGFloat(opacity)
+        colorOverlayView.layer?.cornerRadius = cornerRadius
+
+        if let bgColor = backgroundColor {
+            // Custom/preset color mode: show color overlay, keep blur underneath
+            colorOverlayView.layer?.backgroundColor = bgColor.withAlphaComponent(CGFloat(opacity)).cgColor
+            colorOverlayView.alphaValue = 1
+            backgroundView.alphaValue = 0.3 // subtle blur underneath
+            label.textColor = .white
+        } else {
+            // System mode: vibrancy only
+            colorOverlayView.alphaValue = 0
+            backgroundView.alphaValue = CGFloat(opacity)
+            label.textColor = .labelColor
+        }
 
         label.font = .systemFont(ofSize: fontSize, weight: .bold)
         label.stringValue = text
@@ -89,6 +109,7 @@ final class HUDPanel: NSPanel {
         // Layout subviews by frame
         contentView?.setFrameSize(panelSize)
         backgroundView.frame = CGRect(origin: .zero, size: panelSize)
+        colorOverlayView.frame = CGRect(origin: .zero, size: panelSize)
         label.frame = CGRect(
             x: (panelWidth - labelSize.width) / 2,
             y: (panelHeight - labelSize.height) / 2,
