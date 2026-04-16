@@ -1,0 +1,13 @@
+.DS_Store
+.claude/db/context.db
+.claude/.ctx_state
+.claude/.backup-*
+.claude/.ralph_state
+.claude/.hud_cache
+.claude/.hook_feedback
+.claude/.project_root
+.claude/.messenger_enabled
+*.xcodeproj
+*.xcworkspace
+DerivedData/
+.build/
