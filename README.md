@@ -2,21 +2,36 @@
 
 A lightweight macOS menu bar utility that displays a HUD (Heads-Up Display) overlay when you switch keyboard input sources.
 
+Never wonder which language you're typing in — LnHud shows you at a glance.
+
+## Screenshots
+
+| HUD Overlay | Preferences |
+|:-----------:|:-----------:|
+| ![HUD](Screenshots/monitor-screen.png) | ![Preferences](Screenshots/preference-1.png) |
+
+![Preferences - Display](Screenshots/preference-2.png)
+
 ## Features
 
-- **Input Source HUD** — Shows current input source name (e.g., "한국어", "English") as a large overlay in the center of the screen when switching keyboard layouts
-- **Customizable** — Adjust HUD duration, font size, corner radius, and opacity
-- **Multi-Monitor Support** — Choose where the HUD appears: built-in display, main screen, or mouse cursor screen
-- **Menu Bar App** — Runs as a menu bar utility with no Dock icon
-- **Launch at Login** — Auto-start via SMAppService
-- **App Sandbox** — MAS-ready with minimal permissions
+- **Instant HUD** — Displays the current input source name (e.g., "한국어", "English", "日本語") as a large overlay in the center of the screen whenever you switch keyboard layouts
+- **Fully Customizable** — Adjust HUD duration (0.5–3s), font size (32–96pt), corner radius, and background opacity
+- **Multi-Monitor Support** — Choose where the HUD appears: built-in display, main screen, or the screen where your mouse cursor is
+- **Menu Bar App** — Runs quietly in the menu bar with no Dock icon. Menu bar icon can be hidden if preferred
+- **Launch at Login** — Start automatically when you log in
+- **Privacy First** — No network access, no analytics, no data collection. Runs entirely offline
+- **App Sandbox** — Mac App Store ready with minimal permissions
 
 ## Requirements
 
 - macOS 13.0 (Ventura) or later
 - Apple Silicon (arm64) or Intel (Universal Binary)
 
-## Build
+## Installation
+
+**Mac App Store** — Coming soon
+
+**Manual Build:**
 
 ```bash
 # Install xcodegen if needed
@@ -29,6 +44,18 @@ xcodebuild -project LnHud.xcodeproj -scheme LnHud -configuration Release build
 # Run tests
 xcodebuild -project LnHud.xcodeproj -scheme LnHud test
 ```
+
+## Settings
+
+| Setting | Range | Default |
+|---------|-------|---------|
+| Duration | 0.5 – 3.0s | 1.0s |
+| Font Size | 32 – 96pt | 64pt |
+| Corner Radius | 8 – 48 | 24 |
+| Opacity | 30% – 100% | 90% |
+| HUD Screen | Built-in / Main / Mouse Cursor | Built-in |
+| Menu Bar Icon | On / Off | On |
+| Launch at Login | On / Off | Off |
 
 ## Project Structure
 
@@ -44,10 +71,14 @@ Sources/LnHud/
 
 ## How It Works
 
-1. `InputSourceMonitor` listens for `com.apple.Carbon.TISNotifySelectedKeyboardInputSourceChanged` via `DistributedNotificationCenter`
-2. On input source change, `InputSourceReader` reads the current source name using Carbon TIS API (`TISCopyCurrentKeyboardInputSource`)
+1. `InputSourceMonitor` listens for keyboard input source changes via `DistributedNotificationCenter`
+2. `InputSourceReader` reads the current source name using Carbon TIS API
 3. `HUDController` manages a state machine (idle → fadeIn → visible → fadeOut → idle) and displays the text via `HUDPanel`
-4. `HUDPanel` is a borderless `NSPanel` using `NSVisualEffectView` + `NSTextField` (pure AppKit, no Auto Layout)
+4. `HUDPanel` is a borderless `NSPanel` using `NSVisualEffectView` + `NSTextField` — pure AppKit with no Auto Layout
+
+## Privacy
+
+LnHud does not collect, store, or transmit any data. See [Privacy Policy](PRIVACY.md).
 
 ## License
 
