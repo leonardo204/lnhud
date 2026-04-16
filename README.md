@@ -6,9 +6,9 @@ Never wonder which language you're typing in — LnHud shows you at a glance.
 
 ## Screenshots
 
-| HUD Overlay | Preferences |
-|:-----------:|:-----------:|
-| ![HUD](Screenshots/monitor-screen.png) | ![Preferences](Screenshots/preference-1.png) |
+![HUD Overlay](Screenshots/monitor-screen.png)
+
+![Preferences - HUD](Screenshots/preference-1.png)
 
 ![Preferences - Display](Screenshots/preference-2.png)
 
