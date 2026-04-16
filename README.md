@@ -1,6 +1,6 @@
 # LnHud
 
-A lightweight macOS menu bar utility that displays a HUD (Heads-Up Display) overlay when you switch keyboard input sources. Built as an Apple Silicon native replacement for [iSHud](https://apps.apple.com/kr/app/ishud/id484757536).
+A lightweight macOS menu bar utility that displays a HUD (Heads-Up Display) overlay when you switch keyboard input sources.
 
 ## Features
 
