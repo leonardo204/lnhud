@@ -6,11 +6,11 @@ Never wonder which language you're typing in — LnHud shows you at a glance.
 
 ## Screenshots
 
-![HUD Overlay](Screenshots/monitor-screen.png)
+![HUD Overlay](Screenshots/readme/monitor-screen.png)
 
-![Preferences - HUD](Screenshots/preference-1.png)
+![Preferences - HUD](Screenshots/readme/preference-1.png)
 
-![Preferences - Display](Screenshots/preference-2.png)
+![Preferences - Display](Screenshots/readme/preference-2.png)
 
 ## Features
 
