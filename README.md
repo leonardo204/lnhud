@@ -15,7 +15,8 @@ Never wonder which language you're typing in — LnHud shows you at a glance.
 ## Features
 
 - **Instant HUD** — Displays the current input source name (e.g., "한국어", "English", "日本語") as a large overlay in the center of the screen whenever you switch keyboard layouts
-- **Fully Customizable** — Adjust HUD duration, font size, corner radius, opacity, and background color (system vibrancy, 8 presets, or custom color picker)
+- **Fully Customizable** — Adjust HUD duration, font size, corner radius, opacity, position (9-grid), and background color (system vibrancy, 8 presets, or custom color picker)
+- **Per-Language Color** — Assign different HUD colors for each keyboard input source, or sync all languages to one color
 - **Multi-Monitor Support** — Choose where the HUD appears: built-in display, main screen, or the screen where your mouse cursor is
 - **Menu Bar App** — Runs quietly in the menu bar with no Dock icon. Menu bar icon can be hidden if preferred
 - **Launch at Login** — Start automatically when you log in
@@ -50,11 +51,14 @@ xcodebuild -project LnHud.xcodeproj -scheme LnHud test
 | Setting | Range | Default |
 |---------|-------|---------|
 | Duration | 0.5 – 3.0s | 1.0s |
-| Font Size | 32 – 96pt | 64pt |
+| Font Size | 10 – 96pt | 64pt |
 | Corner Radius | 8 – 48 | 24 |
 | Opacity | 30% – 100% | 90% |
+| Position | 9-grid (3×3) | Center |
+| Offset X / Y | -200 – 200 | 0 |
 | Color Mode | System / Preset / Custom | System |
 | Preset Colors | Dark, Graphite, Navy, Indigo, Teal, Forest, Berry, Brown | — |
+| Sync All Languages | On / Off | On |
 | HUD Screen | Built-in / Main / Mouse Cursor | Built-in |
 | Menu Bar Icon | On / Off | On |
 | Launch at Login | On / Off | Off |
