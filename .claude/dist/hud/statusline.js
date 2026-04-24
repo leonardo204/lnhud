@@ -21,6 +21,7 @@ var C = {
 var HUD_CACHE_FILE = join(homedir(), ".claude", ".hud_cache");
 var AGENT_CACHE_FILE = join(homedir(), ".claude", ".agent_cache");
 var AGENT_CACHE_TTL = 5e3;
+var STALE_SUBAGENT_MS = Number(process.env.DOTCLAUDE_STALE_SUBAGENT_MS) || 12e4;
 async function readStdin() {
   if (process.stdin.isTTY) return null;
   const chunks = [];
@@ -97,7 +98,15 @@ function formatDuration(ms) {
   return rh > 0 ? `${d}d${rh}h` : `${d}d`;
 }
 function renderLimit(label, info) {
-  if (!info || info.utilization == null) return null;
+  if (!info || info.utilization == null) {
+    return `${label}:${C.dim}--%${C.reset}`;
+  }
+  if (info.resets_at) {
+    const resetTime = new Date(info.resets_at).getTime();
+    if (resetTime <= Date.now()) {
+      return `${label}:${C.dim}--%${C.reset}`;
+    }
+  }
   const raw = info.utilization;
   const pct = Math.round(raw >= 1 ? raw : raw * 100);
   const resetStr = info.resets_at ? formatDuration(new Date(info.resets_at).getTime() - Date.now()) : null;
@@ -140,17 +149,34 @@ function countSubagents(sessionId) {
           (f) => f.startsWith("agent-") && f.endsWith(".jsonl")
         );
         let active = 0;
+        let live = 0;
+        const now = Date.now();
         for (const f of transcripts) {
+          const fpath = join(sessionDir, f);
+          let isStale = false;
           try {
-            const content = readFileSync(join(sessionDir, f), "utf8").trim();
+            isStale = now - statSync(fpath).mtimeMs > STALE_SUBAGENT_MS;
+          } catch {
+          }
+          try {
+            const content = readFileSync(fpath, "utf8").trim();
             const lastLine = content.split("\n").pop() ?? "";
             const last = JSON.parse(lastLine);
-            if (!last?.message?.stop_reason) active++;
+            const done = Boolean(last?.message?.stop_reason);
+            if (done) {
+              live++;
+            } else if (!isStale) {
+              active++;
+              live++;
+            }
           } catch {
-            active++;
+            if (!isStale) {
+              active++;
+              live++;
+            }
           }
         }
-        result = { active, total: transcripts.length };
+        result = { active, total: live };
         break;
       }
     }
@@ -193,21 +219,15 @@ async function main() {
     const branchPart = branchName ? ` ${C.dim}(${C.reset}${C.green}${branchName}${C.reset}${C.dim})${C.reset}` : "";
     parts.push(`${C.cyan}${shortenCwd(cwd)}${C.reset}${branchPart}`);
     const cache = loadHudCache();
-    if (cache !== null) {
-      const limitParts = [];
-      if (!cache.five_hour && !cache.seven_day) {
-        limitParts.push(`5h:${C.dim}--%${C.reset} wk:${C.dim}--%${C.reset}`);
-      } else {
-        const fiveH = renderLimit("5h", cache.five_hour);
-        const weekly = renderLimit("wk", cache.seven_day);
-        if (fiveH) limitParts.push(fiveH);
-        if (weekly) limitParts.push(weekly);
-      }
-      if (limitParts.length > 0) {
-        parts.push(limitParts.join(" "));
-      }
-    } else {
-      parts.push(`5h:${C.dim}--%${C.reset} wk:${C.dim}--%${C.reset}`);
+    const limitParts = [];
+    limitParts.push(renderLimit("5h", cache?.five_hour));
+    limitParts.push(renderLimit("wk", cache?.seven_day));
+    const staleMinutes = cache?._ts ? (Date.now() - cache._ts) / 6e4 : Infinity;
+    if (cache?._ok === false && staleMinutes > 10) {
+      limitParts.push(`${C.red}auth?${C.reset}`);
+    }
+    if (limitParts.length > 0) {
+      parts.push(limitParts.join(" "));
     }
     const modelName = stdin.model?.display_name;
     if (modelName) {
