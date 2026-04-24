@@ -46,6 +46,7 @@ final class HUDController {
 
     private(set) var state: State = .idle
     private(set) var displayText: String? = nil
+    private(set) var currentSourceID: String? = nil
 
     private var pendingCancellable: (any Cancellable)?
     nonisolated(unsafe) private var screenObserver: Any?
@@ -102,13 +103,14 @@ final class HUDController {
     private func repositionPanel() {
         guard let panel = panel, panel.isVisible else { return }
         guard let screen = targetScreen() else { return }
-        panel.centerOn(screen: screen)
+        panel.positionOn(screen: screen, position: settings.hudPosition, offsetX: settings.hudOffsetX, offsetY: settings.hudOffsetY)
     }
 
-    func show(text: String) {
+    func show(text: String, sourceID: String? = nil) {
         pendingCancellable?.cancel()
         pendingCancellable = nil
         displayText = text
+        currentSourceID = sourceID
         state = .fadeIn
 
         pendingCancellable = timer.schedule(after: 0.15) { [weak self] in
@@ -172,11 +174,11 @@ final class HUDController {
             fontSize: settings.hudFontSize,
             cornerRadius: settings.hudCornerRadius,
             opacity: settings.hudOpacity,
-            backgroundColor: settings.resolvedHUDColor
+            backgroundColor: settings.resolvedColorForSource(currentSourceID)
         )
 
         guard let screen = targetScreen() else { return }
-        panel.centerOn(screen: screen)
+        panel.positionOn(screen: screen, position: settings.hudPosition, offsetX: settings.hudOffsetX, offsetY: settings.hudOffsetY)
         panel.alphaValue = 0
         panel.orderFront(nil)
 

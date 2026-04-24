@@ -131,4 +131,33 @@ final class HUDPanel: NSPanel {
         let y = screenFrame.midY - panelSize.height / 2
         setFrame(CGRect(origin: CGPoint(x: x, y: y), size: panelSize), display: false)
     }
+
+    func positionOn(screen: NSScreen, position: HUDPosition, offsetX: CGFloat, offsetY: CGFloat) {
+        let size = contentPanelSize
+        let panelSize = size.width > 0 && size.height > 0 ? size : CGSize(width: 400, height: 160)
+        let screenFrame = screen.visibleFrame
+        let margin: CGFloat = 20
+
+        let x: CGFloat
+        switch position {
+        case .topLeft, .middleLeft, .bottomLeft:
+            x = screenFrame.minX + margin
+        case .topCenter, .center, .bottomCenter:
+            x = screenFrame.midX - panelSize.width / 2
+        case .topRight, .middleRight, .bottomRight:
+            x = screenFrame.maxX - panelSize.width - margin
+        }
+
+        let y: CGFloat
+        switch position {
+        case .topLeft, .topCenter, .topRight:
+            y = screenFrame.maxY - panelSize.height - margin
+        case .middleLeft, .center, .middleRight:
+            y = screenFrame.midY - panelSize.height / 2
+        case .bottomLeft, .bottomCenter, .bottomRight:
+            y = screenFrame.minY + margin
+        }
+
+        setFrame(CGRect(origin: CGPoint(x: x + offsetX, y: y + offsetY), size: panelSize), display: false)
+    }
 }

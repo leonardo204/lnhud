@@ -48,6 +48,6 @@ final class InputSourceMonitor {
         lastSourceID = currentID
 
         guard let name = reader.currentInputSourceName() else { return }
-        hudController.show(text: name)
+        hudController.show(text: name, sourceID: currentID)
     }
 }

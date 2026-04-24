@@ -29,7 +29,7 @@ struct PreferencesView: View {
                                 }
                             }
                         ),
-                        in: 32...96,
+                        in: 10...96,
                         step: 2
                     )
                     .frame(width: 200)
@@ -57,55 +57,166 @@ struct PreferencesView: View {
                 }
             }
 
-            // MARK: - Color Section
-            Section("Color") {
-                Picker("Mode", selection: $settings.hudColorMode) {
-                    Text("System").tag(HUDColorMode.system)
-                    Text("Preset").tag(HUDColorMode.preset)
-                    Text("Custom").tag(HUDColorMode.custom)
-                }
-                .pickerStyle(.segmented)
-
-                if settings.hudColorMode == .preset {
-                    LazyVGrid(columns: Array(repeating: GridItem(.fixed(40), spacing: 8), count: 8), spacing: 8) {
-                        ForEach(HUDPresetColor.allCases, id: \.self) { preset in
-                            Button {
-                                DispatchQueue.main.async {
-                                    settings.hudPresetColor = preset
+            // MARK: - Position Section
+            Section("Position") {
+                // 3x3 Grid
+                VStack(spacing: 4) {
+                    ForEach(0..<3) { row in
+                        HStack(spacing: 4) {
+                            ForEach(0..<3) { col in
+                                let positions: [[HUDPosition]] = [
+                                    [.topLeft, .topCenter, .topRight],
+                                    [.middleLeft, .center, .middleRight],
+                                    [.bottomLeft, .bottomCenter, .bottomRight]
+                                ]
+                                let pos = positions[row][col]
+                                Button {
+                                    DispatchQueue.main.async {
+                                        settings.hudPosition = pos
+                                    }
+                                } label: {
+                                    RoundedRectangle(cornerRadius: 4)
+                                        .fill(settings.hudPosition == pos ? Color.accentColor : Color.secondary.opacity(0.2))
+                                        .frame(width: 36, height: 28)
+                                        .overlay(
+                                            Circle()
+                                                .fill(settings.hudPosition == pos ? Color.white : Color.secondary)
+                                                .frame(width: 8, height: 8)
+                                        )
                                 }
-                            } label: {
-                                RoundedRectangle(cornerRadius: 6)
-                                    .fill(preset.swiftUIColor)
-                                    .frame(width: 32, height: 32)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 6)
-                                            .strokeBorder(
-                                                settings.hudPresetColor == preset ? Color.accentColor : Color.clear,
-                                                lineWidth: 2
-                                            )
-                                    )
+                                .buttonStyle(.plain)
                             }
-                            .buttonStyle(.plain)
-                            .help(preset.label)
                         }
                     }
-                    .padding(.vertical, 4)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 4)
+
+                LabeledContent("Offset X: \(Int(settings.hudOffsetX))") {
+                    Slider(
+                        value: Binding(
+                            get: { Double(settings.hudOffsetX) },
+                            set: { newValue in
+                                DispatchQueue.main.async {
+                                    settings.hudOffsetX = CGFloat(newValue.rounded())
+                                }
+                            }
+                        ),
+                        in: -200...200
+                    )
+                    .frame(width: 200)
                 }
 
-                if settings.hudColorMode == .custom {
-                    ColorPicker("HUD Color", selection: Binding(
-                        get: {
-                            if let nsColor = NSColor.fromHex(settings.hudCustomColorHex) {
-                                return Color(nsColor: nsColor)
+                LabeledContent("Offset Y: \(Int(settings.hudOffsetY))") {
+                    Slider(
+                        value: Binding(
+                            get: { Double(settings.hudOffsetY) },
+                            set: { newValue in
+                                DispatchQueue.main.async {
+                                    settings.hudOffsetY = CGFloat(newValue.rounded())
+                                }
                             }
-                            return Color(nsColor: NSColor(red: 0.1, green: 0.1, blue: 0.1, alpha: 1))
-                        },
-                        set: { newColor in
-                            DispatchQueue.main.async {
-                                settings.hudCustomColorHex = NSColor(newColor).hexString
+                        ),
+                        in: -200...200
+                    )
+                    .frame(width: 200)
+                }
+
+                Button("Reset Offset") {
+                    DispatchQueue.main.async {
+                        settings.hudOffsetX = 0
+                        settings.hudOffsetY = 0
+                    }
+                }
+                .controlSize(.small)
+            }
+
+            // MARK: - Color Section
+            Section("Color") {
+                Toggle(isOn: Binding(
+                    get: { settings.colorSyncEnabled },
+                    set: { newValue in
+                        DispatchQueue.main.async {
+                            settings.colorSyncEnabled = newValue
+                        }
+                    }
+                )) {
+                    Text("Sync All Languages")
+                }
+
+                if settings.colorSyncEnabled {
+                    Picker("Mode", selection: $settings.hudColorMode) {
+                        Text("System").tag(HUDColorMode.system)
+                        Text("Preset").tag(HUDColorMode.preset)
+                        Text("Custom").tag(HUDColorMode.custom)
+                    }
+                    .pickerStyle(.segmented)
+
+                    if settings.hudColorMode == .preset {
+                        LazyVGrid(columns: Array(repeating: GridItem(.fixed(40), spacing: 8), count: 8), spacing: 8) {
+                            ForEach(HUDPresetColor.allCases, id: \.self) { preset in
+                                Button {
+                                    DispatchQueue.main.async {
+                                        settings.hudPresetColor = preset
+                                    }
+                                } label: {
+                                    RoundedRectangle(cornerRadius: 6)
+                                        .fill(preset.swiftUIColor)
+                                        .frame(width: 32, height: 32)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 6)
+                                                .strokeBorder(
+                                                    settings.hudPresetColor == preset ? Color.accentColor : Color.clear,
+                                                    lineWidth: 2
+                                                )
+                                        )
+                                }
+                                .buttonStyle(.plain)
+                                .help(preset.label)
                             }
                         }
-                    ), supportsOpacity: false)
+                        .padding(.vertical, 4)
+                    }
+
+                    if settings.hudColorMode == .custom {
+                        ColorPicker("HUD Color", selection: Binding(
+                            get: {
+                                if let nsColor = NSColor.fromHex(settings.hudCustomColorHex) {
+                                    return Color(nsColor: nsColor)
+                                }
+                                return Color(nsColor: NSColor(red: 0.1, green: 0.1, blue: 0.1, alpha: 1))
+                            },
+                            set: { newColor in
+                                DispatchQueue.main.async {
+                                    settings.hudCustomColorHex = NSColor(newColor).hexString
+                                }
+                            }
+                        ), supportsOpacity: false)
+                    }
+                } else {
+                    let sources = InputSourceReader().installedKeyboardSources()
+                    ForEach(sources, id: \.id) { source in
+                        ColorPicker(
+                            source.name,
+                            selection: Binding(
+                                get: {
+                                    if let hex = settings.perSourceColors[source.id],
+                                       let nsColor = NSColor.fromHex(hex) {
+                                        return Color(nsColor: nsColor)
+                                    }
+                                    return Color(nsColor: NSColor(red: 0.1, green: 0.1, blue: 0.1, alpha: 1))
+                                },
+                                set: { newColor in
+                                    DispatchQueue.main.async {
+                                        var colors = settings.perSourceColors
+                                        colors[source.id] = NSColor(newColor).hexString
+                                        settings.perSourceColors = colors
+                                    }
+                                }
+                            ),
+                            supportsOpacity: false
+                        )
+                    }
                 }
             }
 

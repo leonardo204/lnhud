@@ -86,6 +86,12 @@ enum HUDScreenMode: String, CaseIterable {
     }
 }
 
+enum HUDPosition: String, CaseIterable {
+    case topLeft, topCenter, topRight
+    case middleLeft, center, middleRight
+    case bottomLeft, bottomCenter, bottomRight
+}
+
 final class AppSettings: ObservableObject {
     private enum Keys {
         static let hudDuration = "hudDuration"
@@ -98,6 +104,11 @@ final class AppSettings: ObservableObject {
         static let hudPresetColor = "hudPresetColor"
         static let hudCustomColorHex = "hudCustomColorHex"
         static let screenMode = "screenMode"
+        static let hudPosition = "hudPosition"
+        static let hudOffsetX = "hudOffsetX"
+        static let hudOffsetY = "hudOffsetY"
+        static let colorSyncEnabled = "colorSyncEnabled"
+        static let perSourceColors = "perSourceColors"
     }
 
     private let defaults: UserDefaults
@@ -139,6 +150,18 @@ final class AppSettings: ObservableObject {
         }
     }
 
+    /// sourceID에 대응하는 색상 반환 (Sync OFF 시 언어별 색상, ON 시 공통 색상)
+    func resolvedColorForSource(_ sourceID: String?) -> NSColor? {
+        if colorSyncEnabled {
+            return resolvedHUDColor
+        }
+        guard let sourceID = sourceID,
+              let hex = perSourceColors[sourceID] else {
+            return NSColor.fromHex("1A1A1A")
+        }
+        return NSColor.fromHex(hex)
+    }
+
     @Published var showMenuBarIcon: Bool {
         didSet { defaults.set(showMenuBarIcon, forKey: Keys.showMenuBarIcon) }
     }
@@ -149,6 +172,30 @@ final class AppSettings: ObservableObject {
 
     @Published var screenMode: HUDScreenMode {
         didSet { defaults.set(screenMode.rawValue, forKey: Keys.screenMode) }
+    }
+
+    @Published var hudPosition: HUDPosition {
+        didSet { defaults.set(hudPosition.rawValue, forKey: Keys.hudPosition) }
+    }
+
+    @Published var hudOffsetX: CGFloat {
+        didSet { defaults.set(hudOffsetX, forKey: Keys.hudOffsetX) }
+    }
+
+    @Published var hudOffsetY: CGFloat {
+        didSet { defaults.set(hudOffsetY, forKey: Keys.hudOffsetY) }
+    }
+
+    @Published var colorSyncEnabled: Bool {
+        didSet { defaults.set(colorSyncEnabled, forKey: Keys.colorSyncEnabled) }
+    }
+
+    @Published var perSourceColors: [String: String] {
+        didSet {
+            if let data = try? JSONEncoder().encode(perSourceColors) {
+                defaults.set(data, forKey: Keys.perSourceColors)
+            }
+        }
     }
 
     convenience init() {
@@ -215,6 +262,38 @@ final class AppSettings: ObservableObject {
             screenMode = mode
         } else {
             screenMode = .builtIn
+        }
+
+        if let rawValue = defaults.string(forKey: Keys.hudPosition),
+           let position = HUDPosition(rawValue: rawValue) {
+            hudPosition = position
+        } else {
+            hudPosition = .center
+        }
+
+        if defaults.object(forKey: Keys.hudOffsetX) != nil {
+            hudOffsetX = CGFloat(defaults.double(forKey: Keys.hudOffsetX))
+        } else {
+            hudOffsetX = 0
+        }
+
+        if defaults.object(forKey: Keys.hudOffsetY) != nil {
+            hudOffsetY = CGFloat(defaults.double(forKey: Keys.hudOffsetY))
+        } else {
+            hudOffsetY = 0
+        }
+
+        if defaults.object(forKey: Keys.colorSyncEnabled) != nil {
+            colorSyncEnabled = defaults.bool(forKey: Keys.colorSyncEnabled)
+        } else {
+            colorSyncEnabled = true
+        }
+
+        if let data = defaults.data(forKey: Keys.perSourceColors),
+           let dict = try? JSONDecoder().decode([String: String].self, from: data) {
+            perSourceColors = dict
+        } else {
+            perSourceColors = [:]
         }
     }
 }

@@ -7,6 +7,7 @@ import XCTest
 final class MockInputSourceReader: InputSourceReading {
     var stubbedName: String? = "Korean"
     var stubbedID: String? = "com.apple.inputmethod.Korean.2SetKorean"
+    var stubbedSources: [(id: String, name: String)] = []
     var nameCallCount = 0
     var idCallCount = 0
 
@@ -18,6 +19,10 @@ final class MockInputSourceReader: InputSourceReading {
     func currentInputSourceID() -> String? {
         idCallCount += 1
         return stubbedID
+    }
+
+    func installedKeyboardSources() -> [(id: String, name: String)] {
+        return stubbedSources
     }
 }
 
